@@ -1,97 +1,108 @@
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import logo from '../../assets/logo-full.png';
 
 export default function Login() {
+    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
 
     const handleLogin = (e) => {
         e.preventDefault();
         setError('');
-        setLoading(true);
+        setIsLoading(true);
 
-        // Simulate API call and check credentials
+        // Dummy login logic with role support
         setTimeout(() => {
-            if (email === 'admin@gmail.com' && password === 'admin') {
+            if (email === 'admin@eatgreet.com' && password === 'admin') {
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('userRole', 'super-admin');
+                navigate('/super-admin');
+            } else if (email === 'admin@gmail.com' && password === 'admin') {
                 localStorage.setItem('isAuthenticated', 'true');
                 localStorage.setItem('userRole', 'admin');
                 navigate('/admin');
             } else {
-                // Determine if it's potentially another user or just invalid
-                // For now, just show invalid credentials as we only have admin wired up
-                setError('Invalid email or password');
+                // For this demo, let's just let any non-empty input pass as super-admin
+                if (email && password) {
+                    localStorage.setItem('isAuthenticated', 'true');
+                    navigate('/super-admin');
+                } else {
+                    setError('Please enter valid credentials');
+                }
             }
-            setLoading(false);
-        }, 1000);
+            setIsLoading(false);
+        }, 800);
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#EBF2F2] p-4">
-            <div className="bg-[#F4F7F7] p-8 md:p-12 rounded-[2.5rem] shadow-xl w-full max-w-md border border-white/50 relative overflow-hidden">
-                {/* Subtle background noise/gradient simulation if needed, but solid color works for now */}
-
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-[#F4F7F7] p-8 md:p-12 rounded-[2.5rem] shadow-xl w-full max-w-md border border-white/50 relative overflow-hidden"
+            >
                 <div className="flex flex-col items-center mb-8">
-                    {/* Logo */}
                     <div className="mb-2">
-                        <img src="/logo.png" alt="EatGreet Logo" className="w-[180px]" />
+                        <img src={logo} alt="EatGreet Logo" className="w-[180px]" />
                     </div>
-                
-                    <p className="text-gray-500 text-sm mt-2 font-medium">
+                    <p className="text-gray-500 text-sm mt-2 font-medium text-center">
                         Sign in to manage your restaurant
                     </p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-5">
+                <form className="space-y-5" onSubmit={handleLogin}>
                     {error && (
-                        <div className="bg-red-50 text-red-500 text-sm p-3 rounded-lg text-center">
+                        <div className="bg-red-50 text-red-500 text-xs p-3 rounded-2xl text-center font-bold">
                             {error}
                         </div>
                     )}
                     <div>
                         <input
                             type="email"
+                            required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-6 py-3.5 rounded-full bg-[#EAEFEF] border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all shadow-inner text-sm"
-                            placeholder="Email*"
-                            required
+                            className="w-full px-6 py-3.5 rounded-full bg-[#EAEFEF] border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all shadow-inner text-sm"
+                            placeholder="Email (e.g. admin@eatgreet.com)*"
                         />
                     </div>
                     <div>
                         <input
                             type="password"
+                            required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-6 py-3.5 rounded-full bg-[#EAEFEF] border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all shadow-inner text-sm"
-                            placeholder="Password*"
-                            required
+                            className="w-full px-6 py-3.5 rounded-full bg-[#EAEFEF] border border-gray-200 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all shadow-inner text-sm"
+                            placeholder="Password (e.g. admin)*"
                         />
                     </div>
 
                     <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500 px-2">
                         <label className="flex items-center cursor-pointer hover:text-gray-700">
-                            <input type="checkbox" className="form-checkbox h-4 w-4 text-gray-600 rounded border-gray-300 focus:ring-primary focus:ring-offset-0 mr-2" />
+                            <input type="checkbox" className="form-checkbox h-4 w-4 text-gray-600 rounded border-gray-300 focus:ring-black focus:ring-offset-0 mr-2" />
                             <span>Remember me?</span>
                         </label>
                         <a href="#" className="hover:text-gray-700 hover:underline">Forget Password?</a>
                     </div>
 
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        className="w-full bg-black text-white py-4 rounded-full font-semibold shadow-lg hover:translate-y-[-1px] hover:shadow-xl transition-all duration-200 text-sm tracking-wide mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    <button
+                        disabled={isLoading}
+                        className="w-full bg-black text-white py-4 rounded-full font-semibold shadow-lg hover:translate-y-[-1px] hover:shadow-xl transition-all duration-200 text-sm tracking-wide mt-4 disabled:opacity-70 flex items-center justify-center gap-2"
                     >
-                        {loading ? 'Logging in...' : 'Login'}
+                        {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : 'Login'}
                     </button>
                 </form>
 
                 <p className="mt-8 text-center text-sm text-gray-500">
                     New User? <a href="/signup" className="text-blue-500 font-semibold hover:underline">Register</a>
                 </p>
-            </div>
+            </motion.div>
         </div>
     );
 }

@@ -32,7 +32,7 @@ export default function LandingPage() {
     }, [hash]);
 
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-900 overflow-x-hidden">
+        <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
 
             {/* Navbar */}
             <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -70,7 +70,7 @@ export default function LandingPage() {
 
                         <h1 className="text-6xl md:text-7xl leading-[1.1] font-bold">
                             The Future <br />
-                            <span className="text-primary italic font-serif pr-2">of Dining,</span> <br />
+                            <span className="text-primary italic pr-2">of Dining,</span> <br />
                             Today.
                         </h1>
 
