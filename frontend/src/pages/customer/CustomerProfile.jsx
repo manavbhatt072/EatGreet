@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { User, Mail, Phone, MapPin, Save, Heart, Clock } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { authAPI } from '../../utils/api';
 
 const CustomerProfile = () => {
+    const { favorites } = useOutletContext();
     const user = JSON.parse(localStorage.getItem('user')) || {};
     const [profile, setProfile] = useState({
         fullName: user.name || 'User',
@@ -16,12 +20,29 @@ const CustomerProfile = () => {
         setProfile({ ...profile, [e.target.name]: e.target.value });
     };
 
+    const handleSave = async () => {
+        const loadToast = toast.loading('Saving profile...');
+        try {
+            const response = await authAPI.updateProfile({
+                name: profile.fullName,
+                email: profile.email,
+                phone: profile.phone,
+                city: profile.address
+            });
+            localStorage.setItem('user', JSON.stringify(response.data));
+            toast.success('Profile updated!', { id: loadToast });
+            setIsEditing(false);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Update failed', { id: loadToast });
+        }
+    };
+
     return (
         <div className="space-y-8 pb-10">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-800">My Profile</h1>
                 <button
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                     className={`px-5 py-2 rounded-full font-bold text-sm flex items-center gap-2 transition-colors shadow-sm ${isEditing
                         ? 'bg-green-500 text-white'
                         : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
@@ -44,7 +65,7 @@ const CustomerProfile = () => {
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-orange-50 p-4 rounded-2xl flex flex-col items-center text-center">
                     <Heart className="w-6 h-6 text-orange-500 mb-2" />
-                    <span className="text-xl font-bold text-gray-800">12</span>
+                    <span className="text-xl font-bold text-gray-800">{Object.keys(favorites).length}</span>
                     <span className="text-xs text-gray-500 font-bold uppercase">Favorites</span>
                 </div>
                 <div className="bg-blue-50 p-4 rounded-2xl flex flex-col items-center text-center">

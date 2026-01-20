@@ -4,10 +4,69 @@ import {
     Bell, Activity, Save, Upload, Plus, Minus,
     MapPin, Clock, Calendar, FileText, CheckCircle, XCircle
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { authAPI } from '../../utils/api';
 
 const AdminSettings = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const user = JSON.parse(localStorage.getItem('user')) || {};
+
+    const [profile, setProfile] = useState({
+        name: user.name || '',
+        phone: user.phone || '',
+        restaurantName: user.restaurantName || '',
+        city: user.city || ''
+    });
+
+    const [passwords, setPasswords] = useState({
+        newPassword: '',
+        confirmPassword: ''
+    });
+
+    const handleProfileChange = (e) => {
+        setProfile({ ...profile, [e.target.name]: e.target.value });
+    };
+
+    const handlePasswordChange = (e) => {
+        setPasswords({ ...passwords, [e.target.name]: e.target.value });
+    };
+
+    const handleSaveProfile = async () => {
+        const loadToast = toast.loading('Saving changes...');
+        try {
+            // Update Profile Info
+            const profileResponse = await authAPI.updateProfile(profile);
+
+            // Password update if filled
+            if (passwords.newPassword) {
+                if (passwords.newPassword !== passwords.confirmPassword) {
+                    toast.error('Passwords do not match', { id: loadToast });
+                    return;
+                }
+
+                // For a real app, we need current password. 
+                // Since we don't have a field for it here yet, let's warn if we can't do it.
+                // But let's assume we allow super admin or we added the field.
+                // Let's add a prompt for current password if they try to change it.
+                const currentPassword = window.prompt("Please enter your current password to confirm changes:");
+                if (!currentPassword) {
+                    toast.error('Current password is required to change password', { id: loadToast });
+                    return;
+                }
+
+                await authAPI.updatePassword({
+                    currentPassword,
+                    newPassword: passwords.newPassword
+                });
+            }
+
+            localStorage.setItem('user', JSON.stringify(profileResponse.data));
+            toast.success('Settings updated successfully!', { id: loadToast });
+            setPasswords({ newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to update settings', { id: loadToast });
+        }
+    };
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 pb-10 max-w-7xl mx-auto h-[calc(100vh-6rem)]">
@@ -90,7 +149,10 @@ const AdminSettings = () => {
                         </p>
                     </div>
                     {activeTab !== 'subscription' && (
-                        <button className="bg-[#FD6941] hover:bg-orange-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm">
+                        <button
+                            onClick={handleSaveProfile}
+                            className="bg-[#FD6941] hover:bg-orange-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm"
+                        >
                             <Save className="w-4 h-4" />
                             Save Changes
                         </button>
@@ -115,8 +177,8 @@ const AdminSettings = () => {
                                             <button className="text-xs font-bold text-[#FD6941]">Upload New</button>
                                         </div>
                                     </div>
-                                    <InputGroup label="Full Name" defaultValue={user.name || ""} />
-                                    <InputGroup label="Phone Number" defaultValue={user.phone || ""} />
+                                    <InputGroup label="Full Name" name="name" value={profile.name} onChange={handleProfileChange} />
+                                    <InputGroup label="Phone Number" name="phone" value={profile.phone} onChange={handleProfileChange} />
                                     <div className="md:col-span-2">
                                         <label className="block text-xs font-bold text-gray-400 mb-2">Email (Read-Only)</label>
                                         <div className="w-full px-4 py-3 rounded-xl bg-gray-100 border-none text-gray-500 text-sm font-bold">
@@ -126,8 +188,8 @@ const AdminSettings = () => {
                                     <div className="md:col-span-2 border-t border-gray-100 pt-6 mt-2">
                                         <h4 className="font-bold text-gray-800 mb-4">Change Password</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <InputGroup label="New Password" type="password" placeholder="••••••••" />
-                                            <InputGroup label="Confirm Password" type="password" placeholder="••••••••" />
+                                            <InputGroup label="New Password" name="newPassword" value={passwords.newPassword} onChange={handlePasswordChange} type="password" placeholder="••••••••" />
+                                            <InputGroup label="Confirm Password" name="confirmPassword" value={passwords.confirmPassword} onChange={handlePasswordChange} type="password" placeholder="••••••••" />
                                         </div>
                                     </div>
                                 </div>
@@ -140,13 +202,13 @@ const AdminSettings = () => {
                         <div className="space-y-6">
                             <SectionCard title="General Information" icon={Store}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="Restaurant Name" defaultValue={user.restaurantName || ""} />
+                                    <InputGroup label="Restaurant Name" name="restaurantName" value={profile.restaurantName} onChange={handleProfileChange} />
                                     <InputGroup label="Cuisine Type" defaultValue="Multi-Cuisine" />
-                                    <InputGroup label="Contact Number" defaultValue={user.phone || ""} />
+                                    <InputGroup label="Contact Number" name="phone" value={profile.phone} onChange={handleProfileChange} />
                                     <InputGroup label="Business Email" defaultValue={user.email || ""} />
                                     <InputGroup label="GST Number" defaultValue="" />
                                     <div className="md:col-span-2">
-                                        <InputGroup label="Address" defaultValue={user.city || ""} />
+                                        <InputGroup label="Address" name="city" value={profile.city} onChange={handleProfileChange} />
                                     </div>
                                 </div>
                             </SectionCard>
@@ -359,12 +421,14 @@ const SectionCard = ({ title, icon: Icon, children }) => (
     </div>
 );
 
-const InputGroup = ({ label, defaultValue, type = "text", placeholder }) => (
+const InputGroup = ({ label, value, onChange, name, type = "text", placeholder }) => (
     <div>
         <label className="block text-xs font-bold text-gray-400 mb-2">{label}</label>
         <input
             type={type}
-            defaultValue={defaultValue}
+            name={name}
+            value={value}
+            onChange={onChange}
             placeholder={placeholder}
             className="w-full px-4 py-3 rounded-xl bg-gray-50 border-none text-gray-800 text-sm font-bold focus:ring-0 focus:bg-white focus:shadow-sm transition-all outline-none placeholder-gray-300"
         />

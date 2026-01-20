@@ -73,7 +73,9 @@ export default function SuperAdminDashboard() {
         totalRestaurants: 0,
         activeSubscriptions: 0,
         monthlyRevenue: 0,
-        unpaidRestaurants: 0
+        unpaidRestaurants: 0,
+        revenueData: [],
+        paymentStatusData: []
     });
 
     useEffect(() => {
@@ -149,7 +151,7 @@ export default function SuperAdminDashboard() {
                         </div>
                         <div className="flex-1 w-full min-h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={revenueData}>
+                                <LineChart data={statsData.revenueData.length > 0 ? statsData.revenueData : revenueData}>
                                     <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#eee" />
                                     <XAxis
                                         dataKey="name"
@@ -196,14 +198,14 @@ export default function SuperAdminDashboard() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
-                                            data={paymentStatusData}
+                                            data={statsData.paymentStatusData.length > 0 ? statsData.paymentStatusData : paymentStatusData}
                                             innerRadius="70%"
                                             outerRadius="100%"
                                             paddingAngle={5}
                                             dataKey="value"
                                             stroke="none"
                                         >
-                                            {paymentStatusData.map((entry, index) => (
+                                            {(statsData.paymentStatusData.length > 0 ? statsData.paymentStatusData : paymentStatusData).map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
@@ -218,7 +220,7 @@ export default function SuperAdminDashboard() {
                         </div>
 
                         <div className="w-full grid grid-cols-3 gap-2 mt-4">
-                            {paymentStatusData.map((item) => (
+                            {(statsData.paymentStatusData.length > 0 ? statsData.paymentStatusData : paymentStatusData).map((item) => (
                                 <div key={item.name} className="flex flex-col items-center">
                                     <div className="flex items-center gap-1.5 mb-0.5">
                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>

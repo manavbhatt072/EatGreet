@@ -26,7 +26,10 @@ api.interceptors.request.use(
 export const authAPI = {
     login: (credentials) => api.post('/auth/login', credentials),
     register: (userData) => api.post('/auth/register', userData),
-    getProfile: () => api.get('/auth/profile')
+    getProfile: () => api.get('/auth/profile'),
+    updateProfile: (userData) => api.put('/auth/profile', userData),
+    updatePassword: (passwordData) => api.put('/auth/password', passwordData),
+    getRestaurants: () => api.get('/auth/restaurants')
 };
 
 export const menuAPI = {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Filter, Plus, Pencil, Trash2, Image as ImageIcon, X } from 'lucide-react';
 import MediaSlider from '../../components/MediaSlider';
 import { menuAPI, categoryAPI } from '../../utils/api';
+import toast from 'react-hot-toast';
 
 const AdminMenu = () => {
     const [isTableLoading, setIsTableLoading] = useState(false);
@@ -54,9 +55,10 @@ const AdminMenu = () => {
         const item = menuItems.find(i => i._id === id);
         try {
             await menuAPI.update(id, { isAvailable: !item.isAvailable });
+            toast.success(`Item is now ${!item.isAvailable ? 'available' : 'unavailable'}`);
             fetchData();
         } catch (error) {
-            alert('Failed to update status');
+            toast.error('Failed to update status');
         }
     };
 
@@ -76,19 +78,39 @@ const AdminMenu = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this item?')) {
-            try {
-                await menuAPI.delete(id);
-                fetchData();
-            } catch (error) {
-                alert('Failed to delete item');
-            }
-        }
+        toast((t) => (
+            <div className="flex flex-col gap-3">
+                <p className="font-medium text-gray-800">Are you sure you want to delete this item?</p>
+                <div className="flex gap-2">
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await menuAPI.delete(id);
+                                toast.success('Item deleted successfully');
+                                fetchData();
+                            } catch (error) {
+                                toast.error('Failed to delete item');
+                            }
+                        }}
+                        className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors"
+                    >
+                        Delete
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
     };
 
     const handleSave = async () => {
         if (!newItemName.trim() || !newItemPrice || !newItemCategory) {
-            alert("Please fill in all required fields (Name, Category, Price).");
+            toast.error("Please fill in all required fields (Name, Category, Price).");
             return;
         }
 
@@ -103,22 +125,49 @@ const AdminMenu = () => {
             image: mediaItems.length > 0 ? mediaItems[0].url : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80',
             isAvailable: isActiveStatus,
             labels: selectedLabels,
-            // media: mediaItems // Simplified for now as we don't have file upload handled yet
+            media: mediaItems
         };
+
+        const loadToast = toast.loading(editingItem ? 'Updating item...' : 'Creating item...');
 
         try {
             if (editingItem) {
                 await menuAPI.update(editingItem._id, itemData);
+                toast.success('Item updated successfully', { id: loadToast });
             } else {
                 await menuAPI.create(itemData);
+                toast.success('Item created successfully', { id: loadToast });
             }
             fetchData();
             setIsModalOpen(false);
             setEditingItem(null);
             resetForm();
         } catch (error) {
-            alert('Failed to save item: ' + (error.response?.data?.message || error.message));
+            toast.error('Failed to save item: ' + (error.response?.data?.message || error.message), { id: loadToast });
         }
+    };
+
+    const toggleLabel = (label) => {
+        setSelectedLabels(prev =>
+            prev.includes(label)
+                ? prev.filter(l => l !== label)
+                : [...prev, label]
+        );
+    };
+
+    const removeMedia = (index) => {
+        setMediaItems(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleFileUpload = (e) => {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setMediaItems(prev => [...prev, { name: file.name, url: reader.result, type: file.type }].slice(0, 5));
+            };
+            reader.readAsDataURL(file);
+        });
     };
 
     const resetForm = () => {
@@ -282,11 +331,7 @@ const AdminMenu = () => {
                                         ))}
                                         {mediaItems.length < 5 && (
                                             <label className="aspect-square border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#FD6941] hover:bg-orange-50/10 transition-all">
-                                                <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => {
-                                                    const files = Array.from(e.target.files);
-                                                    const newMedia = files.map(f => ({ name: f.name, url: URL.createObjectURL(f), type: f.type }));
-                                                    setMediaItems([...mediaItems, ...newMedia].slice(0, 5));
-                                                }} />
+                                                <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} />
                                                 <ImageIcon className="w-6 h-6 text-gray-400 mb-1" />
                                                 <span className="text-[10px] font-bold text-gray-500">Add Media</span>
                                             </label>

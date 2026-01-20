@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, MapPin, Building, Camera, Save, Shield, LogOut } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { authAPI } from '../../utils/api';
 
 const SuperAdminProfile = () => {
     const navigate = useNavigate();
+    const user = JSON.parse(localStorage.getItem('user')) || {};
+
     const [profile, setProfile] = useState({
-        fullName: 'Manav Bhatt',
-        email: 'manav@eatgreet.com',
-        phone: '+91 98765 43210',
-        companyName: 'EatGreet Inc.',
-        role: 'Super Admin',
-        joinDate: 'Jan 01, 2026'
+        fullName: user.name || 'Super Admin',
+        email: user.email || '',
+        phone: user.phone || '+91 00000 00000',
+        companyName: user.restaurantName || 'EatGreet Inc.',
+        role: user.role === 'super-admin' ? 'Super Admin' : user.role,
+        joinDate: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'Jan 01, 2026'
     });
 
     const [isEditing, setIsEditing] = useState(false);
@@ -19,12 +23,53 @@ const SuperAdminProfile = () => {
         setProfile({ ...profile, [e.target.name]: e.target.value });
     };
 
-    const handleLogout = () => {
-        const confirmLogout = window.confirm("Are you sure you want to log out?");
-        if (confirmLogout) {
-            localStorage.removeItem('isAuthenticated');
-            navigate('/admin/login');
+    const handleSaveProfile = async () => {
+        const loadToast = toast.loading('Updating profile...');
+        try {
+            const response = await authAPI.updateProfile({
+                name: profile.fullName,
+                email: profile.email,
+                phone: profile.phone,
+                restaurantName: profile.companyName
+            });
+
+            // Update local storage
+            const updatedUser = { ...user, ...response.data };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+            toast.success('Profile updated successfully!', { id: loadToast });
+            setIsEditing(false);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to update profile', { id: loadToast });
         }
+    };
+
+    const handleLogout = () => {
+        toast((t) => (
+            <div className="flex flex-col gap-3">
+                <p className="font-medium text-gray-800">Are you sure you want to log out?</p>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => {
+                            localStorage.removeItem('isAuthenticated');
+                            localStorage.removeItem('user');
+                            toast.dismiss(t.id);
+                            toast.success('Logged out successfully');
+                            navigate('/');
+                        }}
+                        className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors"
+                    >
+                        Sign Out
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
     };
 
     return (
@@ -32,7 +77,7 @@ const SuperAdminProfile = () => {
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-800">My Profile</h1>
                 <button
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
                     className={`px-6 py-2.5 rounded-full font-medium flex items-center gap-2 transition-colors shadow-sm ${isEditing
                         ? 'bg-green-500 hover:bg-green-600 text-white'
                         : 'bg-black hover:bg-gray-800 text-white'

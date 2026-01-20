@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import LandingPage from './pages/landing/LandingPage';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
@@ -46,6 +47,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <Router>
+      <Toaster position="top-right" />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
@@ -103,7 +105,7 @@ function App() {
           <Route path="menu" element={<Menu />} />
           <Route path="profile" element={<CustomerProfile />} />
           <Route path="favorites" element={<CustomerFavorites />} />
-         </Route>
+        </Route>
 
         {/* Legacy/Shortcut Routes */}
         <Route path="/menu" element={<Navigate to="/customer/menu" replace />} />

@@ -37,7 +37,7 @@ const CustomerFavorites = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {favoriteItems.map((item) => (
-                        <div key={item.id} className="bg-white rounded-[2.5rem] p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-all group relative overflow-hidden">
+                        <div key={item._id || item.id} className="bg-white rounded-[2.5rem] p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-all group relative overflow-hidden">
 
                             {/* Simple Header without slider for fav view */}
                             <div className="relative h-48 rounded-[2rem] overflow-hidden mb-4 bg-gray-100">
@@ -72,15 +72,15 @@ const CustomerFavorites = () => {
 
                                 {/* Add Button / Qty Control */}
                                 <div className="flex items-center justify-center mt-4">
-                                    {cart[item.id] ? (
+                                    {cart[item._id || item.id] ? (
                                         <div className="flex items-center gap-4 bg-black text-white px-2 py-2 rounded-full shadow-lg w-full max-w-[140px] justify-between">
                                             <button
-                                                onClick={() => removeFromCart(item.id)}
+                                                onClick={() => removeFromCart(item._id || item.id)}
                                                 className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition"
                                             >
                                                 <Minus className="w-4 h-4" />
                                             </button>
-                                            <span className="font-bold text-lg w-6 text-center">{cart[item.id].qty}</span>
+                                            <span className="font-bold text-lg w-6 text-center">{cart[item._id || item.id].qty}</span>
                                             <button
                                                 onClick={() => addToCart(item)}
                                                 className="w-8 h-8 rounded-full bg-[#FD6941] flex items-center justify-center hover:bg-orange-600 transition"

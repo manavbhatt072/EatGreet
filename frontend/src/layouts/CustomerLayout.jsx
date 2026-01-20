@@ -12,6 +12,7 @@ const CustomerLayout = () => {
         const saved = localStorage.getItem('eatgreet_favorites');
         return saved ? JSON.parse(saved) : {};
     });
+    const [tableNo, setTableNo] = useState(() => localStorage.getItem('eatgreet_table') || '4');
     const [showBill, setShowBill] = useState(false);
 
     // Persist Favorites
@@ -19,13 +20,19 @@ const CustomerLayout = () => {
         localStorage.setItem('eatgreet_favorites', JSON.stringify(favorites));
     }, [favorites]);
 
+    // Persist Table No
+    useEffect(() => {
+        localStorage.setItem('eatgreet_table', tableNo);
+    }, [tableNo]);
+
     // -- Handlers --
     const addToCart = (item) => {
+        const itemId = item._id || item.id;
         setCart(prev => ({
             ...prev,
-            [item.id]: {
+            [itemId]: {
                 ...item,
-                qty: (prev[item.id]?.qty || 0) + 1
+                qty: (prev[itemId]?.qty || 0) + 1
             }
         }));
     };
@@ -45,12 +52,13 @@ const CustomerLayout = () => {
     const clearCart = () => setCart({});
 
     const toggleFavorite = (item) => {
+        const itemId = item._id || item.id;
         setFavorites(prev => {
             const newFavs = { ...prev };
-            if (newFavs[item.id]) {
-                delete newFavs[item.id];
+            if (newFavs[itemId]) {
+                delete newFavs[itemId];
             } else {
-                newFavs[item.id] = item;
+                newFavs[itemId] = item;
             }
             return newFavs;
         });
@@ -78,7 +86,7 @@ const CustomerLayout = () => {
 
                     <div className="flex items-center gap-2 md:gap-4">
                         <div className="hidden md:flex items-center gap-1 text-sm font-medium bg-gray-100 px-3 py-1.5 rounded-full">
-                            Table #4
+                            Table #{tableNo}
                         </div>
 
                         <Link to={`${baseUrl}/profile`} className="p-2 hover:bg-gray-100 rounded-full transition-colors relative group">
@@ -112,7 +120,8 @@ const CustomerLayout = () => {
                 <Outlet context={{
                     cart, addToCart, removeFromCart, clearCart,
                     favorites, toggleFavorite,
-                    showBill, setShowBill
+                    showBill, setShowBill,
+                    tableNo, setTableNo
                 }} />
             </main>
 

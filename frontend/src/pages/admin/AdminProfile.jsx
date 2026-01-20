@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Phone, MapPin, Building, LogOut, Settings } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const AdminProfile = () => {
     const navigate = useNavigate();
@@ -17,11 +18,31 @@ const AdminProfile = () => {
     });
 
     const handleLogout = () => {
-        const confirmLogout = window.confirm("Are you sure you want to log out?");
-        if (confirmLogout) {
-            localStorage.removeItem('isAuthenticated');
-            navigate('/admin/login');
-        }
+        toast((t) => (
+            <div className="flex flex-col gap-3">
+                <p className="font-medium text-gray-800">Are you sure you want to log out?</p>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => {
+                            localStorage.removeItem('isAuthenticated');
+                            localStorage.removeItem('user');
+                            toast.dismiss(t.id);
+                            toast.success('Logged out successfully');
+                            navigate('/');
+                        }}
+                        className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors"
+                    >
+                        Sign Out
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
     };
 
     return (

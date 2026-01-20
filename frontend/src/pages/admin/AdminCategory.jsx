@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, ListFilter, Trash2, Camera, User, Pizza, Coffee, Utensils, IceCream, Beef, Egg, Wine, Cake, Sandwich, ChevronRight, Pencil, CheckCircle, XCircle } from 'lucide-react';
 import { categoryAPI } from '../../utils/api';
+import toast from 'react-hot-toast';
 
 const ICON_MAP = {
     Pizza: Pizza,
@@ -23,7 +24,6 @@ const AdminCategory = () => {
     const [editingCategory, setEditingCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [notification, setNotification] = useState(null);
 
     // Form state
     const [name, setName] = useState('');
@@ -46,16 +46,13 @@ const AdminCategory = () => {
         }
     };
 
-    const showNotification = (message, type = 'success') => {
-        setNotification({ message, type });
-        setTimeout(() => setNotification(null), 3000);
-    };
-
     const handleSave = async () => {
         if (!name.trim()) {
-            showNotification('Please enter a category name', 'error');
+            toast.error('Please enter a category name');
             return;
         }
+
+        const loadToast = toast.loading(editingCategory ? 'Updating category...' : 'Creating category...');
 
         try {
             const categoryData = {
@@ -63,38 +60,51 @@ const AdminCategory = () => {
                 icon: selectedIcon
             };
 
-            console.log('Saving category:', categoryData);
-
             if (editingCategory) {
-                const response = await categoryAPI.update(editingCategory._id, categoryData);
-                console.log('Update response:', response);
-                showNotification('Category updated successfully!', 'success');
+                await categoryAPI.update(editingCategory._id, categoryData);
+                toast.success('Category updated successfully!', { id: loadToast });
             } else {
-                const response = await categoryAPI.create(categoryData);
-                console.log('Create response:', response);
-                showNotification('Category created successfully!', 'success');
+                await categoryAPI.create(categoryData);
+                toast.success('Category created successfully!', { id: loadToast });
             }
 
             fetchCategories();
             closeModal();
         } catch (error) {
-            console.error('Category save error:', error);
-            console.error('Error response:', error.response);
             const errorMsg = error.response?.data?.message || error.message || 'Failed to save category';
-            showNotification(errorMsg, 'error');
+            toast.error(errorMsg, { id: loadToast });
         }
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Delete this category? Items in this category will become uncategorized.')) {
-            try {
-                await categoryAPI.delete(id);
-                showNotification('Category deleted successfully!', 'success');
-                fetchCategories();
-            } catch (error) {
-                showNotification('Failed to delete category', 'error');
-            }
-        }
+        toast((t) => (
+            <div className="flex flex-col gap-3">
+                <p className="font-medium text-gray-800 text-sm">Delete this category? Items will become uncategorized.</p>
+                <div className="flex gap-2">
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await categoryAPI.delete(id);
+                                toast.success('Category deleted successfully!');
+                                fetchCategories();
+                            } catch (error) {
+                                toast.error('Failed to delete category');
+                            }
+                        }}
+                        className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors"
+                    >
+                        Delete
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
     };
 
     const openModal = (cat = null) => {
@@ -242,18 +252,6 @@ const AdminCategory = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
-            {/* Notification Toast */}
-            {notification && (
-                <div className={`fixed top-6 right-6 z-[100] px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-5 fade-in duration-300 ${notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                    }`}>
-                    {notification.type === 'success' ? (
-                        <CheckCircle className="w-5 h-5" />
-                    ) : (
-                        <XCircle className="w-5 h-5" />
-                    )}
-                    <span className="font-bold text-sm">{notification.message}</span>
                 </div>
             )}
         </div>

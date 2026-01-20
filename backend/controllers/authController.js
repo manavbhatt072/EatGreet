@@ -102,3 +102,66 @@ exports.getProfile = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+// @desc    Get all restaurants (admins)
+// @route   GET /api/auth/restaurants
+// @access  Private/SuperAdmin
+exports.getRestaurants = async (req, res) => {
+    try {
+        const restaurants = await User.find({ role: 'admin' }).select('-password');
+        res.json(restaurants);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+exports.updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user) {
+            user.name = req.body.name || user.name;
+            user.email = req.body.email || user.email;
+            user.phone = req.body.phone || user.phone;
+            user.restaurantName = req.body.restaurantName || user.restaurantName;
+            user.city = req.body.city || user.city;
+
+            const updatedUser = await user.save();
+
+            res.json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                restaurantName: updatedUser.restaurantName,
+                phone: updatedUser.phone,
+                city: updatedUser.city,
+                token: generateToken(updatedUser._id)
+            });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update user password
+// @route   PUT /api/auth/password
+// @access  Private
+exports.updatePassword = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('+password');
+
+        if (user && (await user.matchPassword(req.body.currentPassword))) {
+            user.password = req.body.newPassword;
+            await user.save();
+            res.json({ message: 'Password updated successfully' });
+        } else {
+            res.status(401).json({ message: 'Invalid current password' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

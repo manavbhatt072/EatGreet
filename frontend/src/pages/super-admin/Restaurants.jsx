@@ -9,9 +9,43 @@ import {
     Ban
 } from 'lucide-react';
 
-const restaurants = [];
+import { authAPI } from '../../utils/api';
 
 export default function Restaurants() {
+    const [restaurants, setRestaurants] = React.useState([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [searchTerm, setSearchTerm] = React.useState('');
+
+    React.useEffect(() => {
+        fetchRestaurants();
+    }, []);
+
+    const fetchRestaurants = async () => {
+        try {
+            const response = await authAPI.getRestaurants();
+            setRestaurants(response.data);
+        } catch (error) {
+            console.error('Error fetching restaurants:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const filteredRestaurants = restaurants.filter(res =>
+        res.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        res.restaurantName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        res.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const getInitials = (res) => {
+        const name = res.restaurantName || res.name;
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    };
+
+    const getColor = (idx) => {
+        const colors = ['bg-blue-100 text-blue-600', 'bg-purple-100 text-purple-600', 'bg-orange-100 text-orange-600', 'bg-emerald-100 text-emerald-600'];
+        return colors[idx % colors.length];
+    };
     return (
         <div className="h-screen bg-[#F0F2F4] p-4 md:p-6 flex flex-col overflow-hidden">
             <div className="max-w-[1600px] mx-auto w-full flex-1 flex flex-col space-y-6 min-h-0">
@@ -44,6 +78,8 @@ export default function Restaurants() {
                                     <input
                                         type="text"
                                         placeholder="Search..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
                                         className="pl-12 pr-6 py-3 bg-gray-100/50 border border-transparent focus:bg-white focus:border-gray-200 rounded-full w-[300px] text-sm font-medium transition-all outline-none"
                                     />
                                 </div>
@@ -67,46 +103,47 @@ export default function Restaurants() {
 
                     {/* List Content */}
                     <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-3 no-scrollbar">
-                        {restaurants.length > 0 ? (
-                            restaurants.map((restaurant, idx) => (
+                        {isLoading ? (
+                            <div className="py-20 flex flex-col items-center justify-center text-gray-400">
+                                <p className="font-bold text-lg animate-pulse">Loading Restaurants...</p>
+                            </div>
+                        ) : filteredRestaurants.length > 0 ? (
+                            filteredRestaurants.map((restaurant, idx) => (
                                 <motion.div
-                                    key={restaurant.id}
+                                    key={restaurant._id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.1 }}
                                     className="grid grid-cols-12 items-center gap-4 bg-white hover:bg-gray-50/50 px-6 py-5 rounded-[1.8rem] border border-gray-100 transition-all cursor-pointer group"
                                 >
                                     <div className="col-span-3 flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm ${restaurant.color}`}>
-                                            {restaurant.initials}
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm ${getColor(idx)}`}>
+                                            {getInitials(restaurant)}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-gray-900">{restaurant.name}</h3>
-                                            <p className="text-xs text-gray-400 font-medium">ID {restaurant.id}</p>
+                                            <h3 className="font-bold text-gray-900">{restaurant.restaurantName || restaurant.name}</h3>
+                                            <p className="text-xs text-gray-400 font-medium">ID {restaurant._id.slice(-6)}</p>
                                         </div>
                                     </div>
                                     <div className="col-span-2">
-                                        <p className="font-bold text-sm text-gray-800">{restaurant.admin}</p>
+                                        <p className="font-bold text-sm text-gray-800">{restaurant.name}</p>
                                         <p className="text-xs text-gray-400 font-medium truncate">{restaurant.email}</p>
                                     </div>
                                     <div className="col-span-2">
-                                        <p className="font-bold text-sm text-gray-800">{restaurant.joinDate}</p>
+                                        <p className="font-bold text-sm text-gray-800">{new Date(restaurant.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="col-span-1 flex justify-center">
                                         <span className="px-4 py-1.5 bg-[#E6DAFF] text-[#8C52FF] rounded-full text-[10px] font-extrabold uppercase tracking-tight">
-                                            {restaurant.subscription}
+                                            Premium
                                         </span>
                                     </div>
                                     <div className="col-span-1 text-center">
-                                        <p className="font-bold text-sm text-gray-800">{restaurant.usage.split(' ')[0]} <span className="text-gray-400 font-medium">Orders</span></p>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{restaurant.billing}</p>
+                                        <p className="font-bold text-sm text-gray-800">45 <span className="text-gray-400 font-medium">Orders</span></p>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Monthly</p>
                                     </div>
                                     <div className="col-span-1 flex justify-center">
-                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-tight ${restaurant.status === 'Active'
-                                            ? 'bg-[#E7F9F0] text-[#10B981]'
-                                            : 'bg-[#FFEDED] text-[#EF4444]'
-                                            }`}>
-                                            {restaurant.status}
+                                        <span className="px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-tight bg-[#E7F9F0] text-[#10B981]">
+                                            Active
                                         </span>
                                     </div>
                                     <div className="col-span-2 flex items-center justify-end gap-2 pr-2">

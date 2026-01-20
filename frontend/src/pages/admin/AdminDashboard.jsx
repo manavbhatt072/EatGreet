@@ -7,7 +7,9 @@ const AdminDashboard = () => {
         totalOrders: 0,
         revenue: 0,
         activeOrders: 0,
-        menuItems: 0
+        menuItems: 0,
+        dineIn: 0,
+        takeaway: 0
     });
     const user = JSON.parse(localStorage.getItem('user'));
     const activeOrders = []; // To be implemented with real orders logic later
@@ -93,22 +95,25 @@ const AdminDashboard = () => {
 
                     <div className="space-y-8">
                         <div className="flex items-end gap-3">
-                            <span className="text-6xl font-bold">124</span>
+                            <span className="text-6xl font-bold">{statsData.totalOrders}</span>
                             <span className="text-gray-400 font-bold mb-2 uppercase tracking-widest text-xs">Total</span>
                         </div>
 
                         <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                            <div className="h-full bg-[#FD6941] w-[85%] rounded-full shadow-[0_0_15px_rgba(253,105,65,0.5)]"></div>
+                            <div
+                                className="h-full bg-[#FD6941] rounded-full shadow-[0_0_15px_rgba(253,105,65,0.5)] transition-all duration-1000"
+                                style={{ width: `${(statsData.totalOrders / (statsData.totalOrders + 20)) * 100}%` }}
+                            ></div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dine-in</p>
-                                <p className="text-xl font-bold">86</p>
+                                <p className="text-xl font-bold">{statsData.dineIn}</p>
                             </div>
                             <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Takeaway</p>
-                                <p className="text-xl font-bold">38</p>
+                                <p className="text-xl font-bold">{statsData.takeaway}</p>
                             </div>
                         </div>
                     </div>

@@ -90,8 +90,11 @@ const Menu = () => {
     const {
         cart, addToCart, removeFromCart, clearCart,
         favorites, toggleFavorite,
-        showBill, setShowBill
+        showBill, setShowBill,
+        tableNo, setTableNo
     } = useOutletContext();
+
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
@@ -120,11 +123,15 @@ const Menu = () => {
     };
 
     const [customerDetails, setCustomerDetails] = useState({
-        name: "",
-        phone: "",
-        tableNo: "4", // Defaulting to 4 as per header
+        name: user?.name || "",
+        phone: user?.phone || "",
+        tableNo: tableNo,
         notes: ""
     });
+
+    useEffect(() => {
+        setCustomerDetails(prev => ({ ...prev, tableNo }));
+    }, [tableNo]);
 
     const handlePlaceOrder = (e) => {
         e.preventDefault();
@@ -143,13 +150,21 @@ const Menu = () => {
     const tax = Math.round(subTotal * 0.05); // 5% Tax
     const grandTotal = subTotal + tax;
 
-    const filteredItems = menuItems.filter(item => {
+    // Use fetched items if available, else fallback to mock for demo
+    const itemsToDisplay = menuItems.length > 0 ? menuItems : mockMenuData;
+
+    const filteredItems = itemsToDisplay.filter(item => {
         const itemCategory = typeof item.category === 'object' ? item.category?.name : item.category;
         const matchesCategory = selectedCategory === "All" || (itemCategory && itemCategory.toUpperCase() === selectedCategory.toUpperCase());
         const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.description.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCategory && matchesSearch;
-    });
+    }).map(item => ({
+        ...item,
+        time: item.time || "15-20 min",
+        calories: item.calories || "450 kcal",
+        isVeg: item.isVeg !== undefined ? item.isVeg : true
+    }));
 
     return (
         <div className="bg-gray-50 min-h-screen pb-32 md:pb-0">
@@ -419,7 +434,11 @@ const Menu = () => {
                                                 <input
                                                     type="text"
                                                     value={customerDetails.tableNo}
-                                                    onChange={e => setCustomerDetails({ ...customerDetails, tableNo: e.target.value })}
+                                                    onChange={e => {
+                                                        const val = e.target.value;
+                                                        setCustomerDetails({ ...customerDetails, tableNo: val });
+                                                        setTableNo(val);
+                                                    }}
                                                     className="w-full px-4 py-3 bg-gray-50 rounded-xl text-sm font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FD6941]"
                                                 />
                                             </div>
