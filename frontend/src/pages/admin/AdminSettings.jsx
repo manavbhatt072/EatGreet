@@ -7,6 +7,7 @@ import {
 
 const AdminSettings = () => {
     const [activeTab, setActiveTab] = useState('profile');
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 pb-10 max-w-7xl mx-auto h-[calc(100vh-6rem)]">
@@ -114,12 +115,12 @@ const AdminSettings = () => {
                                             <button className="text-xs font-bold text-[#FD6941]">Upload New</button>
                                         </div>
                                     </div>
-                                    <InputGroup label="Full Name" defaultValue="Manav Bhatt" />
-                                    <InputGroup label="Phone Number" defaultValue="+91 98765 43210" />
+                                    <InputGroup label="Full Name" defaultValue={user.name || ""} />
+                                    <InputGroup label="Phone Number" defaultValue={user.phone || ""} />
                                     <div className="md:col-span-2">
                                         <label className="block text-xs font-bold text-gray-400 mb-2">Email (Read-Only)</label>
                                         <div className="w-full px-4 py-3 rounded-xl bg-gray-100 border-none text-gray-500 text-sm font-bold">
-                                            manav@eatgreet.com
+                                            {user.email || ""}
                                         </div>
                                     </div>
                                     <div className="md:col-span-2 border-t border-gray-100 pt-6 mt-2">
@@ -139,13 +140,13 @@ const AdminSettings = () => {
                         <div className="space-y-6">
                             <SectionCard title="General Information" icon={Store}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <InputGroup label="Restaurant Name" defaultValue="EatGreet HQ" />
+                                    <InputGroup label="Restaurant Name" defaultValue={user.restaurantName || ""} />
                                     <InputGroup label="Cuisine Type" defaultValue="Multi-Cuisine" />
-                                    <InputGroup label="Contact Number" defaultValue="+91 98765 43210" />
-                                    <InputGroup label="Business Email" defaultValue="contact@eatgreethq.com" />
-                                    <InputGroup label="GST Number" defaultValue="24AAAAA0000A1Z5" />
+                                    <InputGroup label="Contact Number" defaultValue={user.phone || ""} />
+                                    <InputGroup label="Business Email" defaultValue={user.email || ""} />
+                                    <InputGroup label="GST Number" defaultValue="" />
                                     <div className="md:col-span-2">
-                                        <InputGroup label="Address" defaultValue="123, Food Street, Gujarat, India" />
+                                        <InputGroup label="Address" defaultValue={user.city || ""} />
                                     </div>
                                 </div>
                             </SectionCard>

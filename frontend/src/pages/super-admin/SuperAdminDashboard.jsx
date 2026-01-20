@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    BarChart,
     LineChart,
     Line,
     XAxis,
@@ -13,20 +12,14 @@ import {
     Cell
 } from 'recharts';
 import {
-    Settings,
-    Bell,
-    LayoutDashboard,
-    UtensilsCrossed,
-    CreditCard,
     BarChart3,
-    Users,
-    ChevronDown,
     TrendingUp,
     AlertTriangle,
     Store,
     Ticket
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { statsAPI } from '../../utils/api';
 
 
 const revenueData = [
@@ -70,190 +63,173 @@ const StatCard = ({ title, value, change, icon: Icon, gradient, colorClass }) =>
                 <TrendingUp className="w-3 h-3" />
                 {change}
             </div>
-            <span className="text-xs text-gray-500 font-medium">vs last Month</span>
+            <span className="text-xs text-gray-500 font-medium text-nowrap">Current Status</span>
         </div>
     </motion.div>
 );
 
 export default function SuperAdminDashboard() {
+    const [statsData, setStatsData] = useState({
+        totalRestaurants: 0,
+        activeSubscriptions: 0,
+        monthlyRevenue: 0,
+        unpaidRestaurants: 0
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await statsAPI.getSuperAdminStats();
+                setStatsData(response.data);
+            } catch (error) {
+                console.error('Error fetching super admin stats:', error);
+            }
+        };
+        fetchStats();
+    }, []);
+
     return (
-        <div className="h-screen bg-[#F0F2F4] p-4 md:p-6 flex flex-col overflow-hidden">
-
-        <div className="flex flex-col space-y-6">
-            {/* Welcome Section */}
-            <div className="flex justify-between items-end">
-                <div className="space-y-0.5">
-                    <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-700 to-gray-800">Dashboard</h1>
-                    <p className="text-gray-500 text-sm font-medium">Welcome back, <span className="text-gray-800">Super Admin</span></p>
+        <div className="h-screen bg-[#F0F2F4] p-4 md:p-6 flex flex-col overflow-hidden text-gray-800">
+            <div className="flex flex-col space-y-6">
+                {/* Welcome Section */}
+                <div className="flex justify-between items-end">
+                    <div className="space-y-0.5">
+                        <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-700 to-gray-800">Dashboard</h1>
+                        <p className="text-gray-500 text-sm font-medium">Welcome back, <span className="text-gray-800 font-bold">Super Admin</span></p>
+                    </div>
                 </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                    title="Total Restaurants"
-                    value="0"
-                    change="0%"
-                    icon={Store}
-                    gradient="bg-gradient-to-br from-[#E2F0E9] to-[#D4E9F2]"
-                    colorClass="text-emerald-600"
-                />
-                <StatCard
-                    title="Active Subscriptions"
-                    value="0"
-                    change="0%"
-                    icon={Ticket}
-                    gradient="bg-gradient-to-br from-[#E6F3E6] to-[#CDE7CD]"
-                    colorClass="text-emerald-600"
-                />
-                <StatCard
-                    title="Monthly Revenue"
-                    value="₹0"
-                    change="0%"
-                    icon={BarChart3}
-                    gradient="bg-gradient-to-br from-[#E9F5E9] to-[#DFF0DF]"
-                    colorClass="text-emerald-600"
-                />
-                <StatCard
-                    title="Unpaid Restaurants"
-                    value="0"
-                    change="0%"
-                    icon={AlertTriangle}
-                    gradient="bg-gradient-to-br from-[#FAF3E5] to-[#F1E4C9]"
-                    colorClass="text-rose-500"
-                />
-            </div>
-
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[400px]">
-                {/* Subscription Revenue Line Chart */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="lg:col-span-2 bg-white/60 backdrop-blur-sm p-6 rounded-[2rem] border border-white/60 shadow-sm flex flex-col"
-                >
-                    <div className="mb-4">
-                        <h3 className="text-lg font-bold text-gray-900">Subscription Revenue</h3>
-                        <p className="text-xs text-gray-500">Monthly recurring revenue trends</p>
-                    </div>
-                    <div className="flex-1 w-full min-h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={revenueData}>
-                                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#eee" />
-                                <XAxis
-                                    dataKey="name"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#9ca3af', fontSize: 10 }}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#9ca3af', fontSize: 10 }}
-                                    tickFormatter={(value) => `₹${value / 1000}k`}
-                                />
-                                <Tooltip
-                                    contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                />
-                                <Line
-                                    type="monotone"
-                                    dataKey="value"
-                                    stroke="#10B981"
-                                    strokeWidth={4}
-                                    dot={false}
-                                    activeDot={{ r: 6, fill: '#10B981', stroke: '#fff', strokeWidth: 2 }}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                </motion.div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard
                         title="Total Restaurants"
-                        value="0"
-                        change="0%"
+                        value={statsData.totalRestaurants}
+                        change="Live"
                         icon={Store}
                         gradient="bg-gradient-to-br from-[#E2F0E9] to-[#D4E9F2]"
                         colorClass="text-emerald-600"
                     />
                     <StatCard
                         title="Active Subscriptions"
-                        value="0"
-                        change="0%"
+                        value={statsData.activeSubscriptions}
+                        change="Live"
                         icon={Ticket}
                         gradient="bg-gradient-to-br from-[#E6F3E6] to-[#CDE7CD]"
                         colorClass="text-emerald-600"
                     />
                     <StatCard
                         title="Monthly Revenue"
-                        value="₹0"
-                        change="0%"
+                        value={`₹${statsData.monthlyRevenue.toLocaleString()}`}
+                        change="Live"
                         icon={BarChart3}
                         gradient="bg-gradient-to-br from-[#E9F5E9] to-[#DFF0DF]"
                         colorClass="text-emerald-600"
                     />
                     <StatCard
                         title="Unpaid Restaurants"
-                        value="0"
-                        change="0%"
+                        value={statsData.unpaidRestaurants}
+                        change="Alert"
                         icon={AlertTriangle}
                         gradient="bg-gradient-to-br from-[#FAF3E5] to-[#F1E4C9]"
                         colorClass="text-rose-500"
                     />
                 </div>
 
-                {/* Payment Status Donut Chart */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-white/60 backdrop-blur-sm p-6 rounded-[2rem] border border-white/60 shadow-sm flex flex-col items-center justify-between"
-                >
-                    <div className="w-full text-left mb-4">
-                        <h3 className="text-lg font-bold text-gray-900">Payment Status</h3>
-                        <p className="text-xs text-gray-500">Restaurant payment breakdown</p>
-                    </div>
-
-                    <div className="relative flex-1 w-full min-h-[300px] flex items-center justify-center">
-                        <div className="aspect-square h-full max-h-[200px]">
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[400px]">
+                    {/* Subscription Revenue Line Chart */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="lg:col-span-2 bg-white/60 backdrop-blur-sm p-6 rounded-[2rem] border border-white/60 shadow-sm flex flex-col"
+                    >
+                        <div className="mb-4">
+                            <h3 className="text-lg font-bold text-gray-900">Subscription Revenue</h3>
+                            <p className="text-xs text-gray-500">Monthly recurring revenue trends</p>
+                        </div>
+                        <div className="flex-1 w-full min-h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={paymentStatusData}
-                                        innerRadius="70%"
-                                        outerRadius="100%"
-                                        paddingAngle={5}
+                                <LineChart data={revenueData}>
+                                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#eee" />
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#9ca3af', fontSize: 10 }}
+                                        dy={10}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#9ca3af', fontSize: 10 }}
+                                        tickFormatter={(value) => `₹${value / 1000}k`}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Line
+                                        type="monotone"
                                         dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {paymentStatusData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                </PieChart>
+                                        stroke="#10B981"
+                                        strokeWidth={4}
+                                        dot={false}
+                                        activeDot={{ r: 6, fill: '#10B981', stroke: '#fff', strokeWidth: 2 }}
+                                    />
+                                </LineChart>
                             </ResponsiveContainer>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-3xl font-extrabold text-gray-900">0</span>
-                                <span className="text-xs text-gray-400 font-bold tracking-widest">TOTAL</span>
+                        </div>
+                    </motion.div>
+
+                    {/* Payment Status Donut Chart */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white/60 backdrop-blur-sm p-6 rounded-[2rem] border border-white/60 shadow-sm flex flex-col items-center justify-between"
+                    >
+                        <div className="w-full text-left mb-4">
+                            <h3 className="text-lg font-bold text-gray-900">Payment Status</h3>
+                            <p className="text-xs text-gray-500">Restaurant payment breakdown</p>
+                        </div>
+
+                        <div className="relative flex-1 w-full min-h-[300px] flex items-center justify-center">
+                            <div className="aspect-square h-full max-h-[200px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={paymentStatusData}
+                                            innerRadius="70%"
+                                            outerRadius="100%"
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {paymentStatusData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-3xl font-extrabold text-gray-900">{statsData.totalRestaurants}</span>
+                                    <span className="text-xs text-gray-400 font-bold tracking-widest">TOTAL</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="w-full grid grid-cols-3 gap-2 mt-4">
-                        {paymentStatusData.map((item) => (
-                            <div key={item.name} className="flex flex-col items-center">
-                                <div className="flex items-center gap-1.5 mb-0.5">
-                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                    <span className="text-xs font-bold text-gray-700">{item.value}</span>
+                        <div className="w-full grid grid-cols-3 gap-2 mt-4">
+                            {paymentStatusData.map((item) => (
+                                <div key={item.name} className="flex flex-col items-center">
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
+                                        <span className="text-xs font-bold text-gray-700">{item.value}</span>
+                                    </div>
+                                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">{item.name}</span>
                                 </div>
-                                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">{item.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                </motion.div>
+                            ))}
+                        </div>
+                    </motion.div>
+                </div>
             </div>
         </div>
     );

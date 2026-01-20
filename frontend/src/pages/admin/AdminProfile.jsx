@@ -4,15 +4,16 @@ import { User, Mail, Phone, MapPin, Building, LogOut, Settings } from 'lucide-re
 
 const AdminProfile = () => {
     const navigate = useNavigate();
-    // Read-only state for display
+    const user = JSON.parse(localStorage.getItem('user')) || {};
+    // Dynamic profile data from localStorage
     const [profile] = useState({
-        fullName: 'Manav Bhatt',
-        email: 'manav@eatgreet.com',
-        phone: '+91 98765 43210',
-        restaurantName: 'EatGreet HQ',
-        address: '123, Food Street, Gujarat, India',
-        role: 'Restaurant Admin',
-        joinDate: 'Jan 20, 2026'
+        fullName: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        restaurantName: user.restaurantName || '',
+        address: user.city || '',
+        role: user.role === 'admin' ? 'Restaurant Manager' : user.role === 'super-admin' ? 'Super Admin' : 'Restaurant Admin',
+        joinDate: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : new Date().toLocaleDateString()
     });
 
     const handleLogout = () => {

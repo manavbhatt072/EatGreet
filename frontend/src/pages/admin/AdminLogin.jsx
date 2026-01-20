@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
+import { authAPI } from '../../utils/api';
 
 const AdminLogin = () => {
     const [email, setEmail] = useState('');
@@ -9,26 +10,31 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            if (email === 'admin@gmail.com' && password === 'admin') {
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userRole', 'admin');
-                navigate('/admin');
-            } else if (email === 'admin@eatgreet.com' && password === 'admin') {
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userRole', 'super-admin');
+        try {
+            const response = await authAPI.login({ email, password });
+            const userData = response.data;
+
+            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('userRole', userData.role);
+
+            if (userData.role === 'super-admin') {
                 navigate('/super-admin');
+            } else if (userData.role === 'admin') {
+                navigate('/admin');
             } else {
-                setError('Invalid email or password');
+                navigate('/customer/menu');
             }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+        } finally {
             setLoading(false);
-        }, 1000);
+        }
     };
 
     return (
@@ -95,7 +101,7 @@ const AdminLogin = () => {
                     </button>
 
                     <div className="text-center text-sm text-gray-500">
-                        New User? <Link to="/#contact" className="text-blue-500 font-medium hover:underline">Register</Link>
+                        New User? <Link to="/signup" className="text-blue-500 font-medium hover:underline">Register</Link>
                     </div>
                 </form>
             </div>

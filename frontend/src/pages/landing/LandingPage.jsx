@@ -17,8 +17,68 @@ import menuIcon from '../../assets/menu-icon.png';
 import logoFull from '../../assets/logo-full.png';
 import contactIllustrationHD from '../../assets/contact-illustration-hd.png';
 
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../../utils/api';
+
 export default function LandingPage() {
     const { hash } = useLocation();
+    const navigate = useNavigate();
+
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        phone: '',
+        city: '',
+        businessName: '',
+        interestedIn: []
+    });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+
+    const handleCheckboxChange = (item) => {
+        setFormData(prev => ({
+            ...prev,
+            interestedIn: prev.interestedIn.includes(item)
+                ? prev.interestedIn.filter(i => i !== item)
+                : [...prev.interestedIn, item]
+        }));
+    };
+
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        setError('');
+        setSuccess('');
+        setIsLoading(true);
+
+        try {
+            const isManager = formData.interestedIn.includes('Manager Dashboard');
+            const signupData = {
+                name: formData.name,
+                email: formData.email,
+                password: formData.password,
+                phone: formData.phone,
+                city: formData.city,
+                role: isManager ? 'admin' : 'customer',
+                restaurantName: isManager ? formData.businessName : undefined
+            };
+
+            const response = await authAPI.register(signupData);
+            const userData = response.data;
+
+            setSuccess('Registration successful! Please login to your dashboard.');
+
+            setTimeout(() => {
+                navigate('/login');
+            }, 1500);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Registration failed. Please check your details.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (hash) {
@@ -215,8 +275,8 @@ export default function LandingPage() {
                         {/* Left Side: Illustration & Text */}
                         <div className="space-y-6">
                             <div>
-                                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">We'd Love to answer your questions</h2>
-                                <p className="text-gray-500 text-lg">Have a query? We'd be happy to answer any questions you might have.</p>
+                                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">Join EatGreet Today</h2>
+                                <p className="text-gray-500 text-lg">Create your account and experience the future of dining. Register as a manager to set up your restaurant!</p>
                             </div>
                             <div className="flex justify-center lg:justify-start">
                                 <img src={contactIllustrationHD} alt="Contact Illustration" className="w-full max-w-md object-contain" />
@@ -225,54 +285,116 @@ export default function LandingPage() {
 
                         {/* Right Side: Form */}
                         <div className="bg-transparent">
-                            <form className="grid gap-5">
+                            <form className="grid gap-5" onSubmit={handleRegister}>
+                                {error && <div className="bg-red-50 text-red-500 p-4 rounded-2xl text-sm font-bold">{error}</div>}
+                                {success && <div className="bg-green-50 text-green-500 p-4 rounded-2xl text-sm font-bold">{success}</div>}
+
                                 <div className="grid md:grid-cols-2 gap-5">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-800 ml-1">Name<span className="text-red-500">*</span></label>
-                                        <input type="text" className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400" />
+                                        <label className="text-sm font-bold text-gray-800 ml-1">Full Name<span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.name}
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400"
+                                            placeholder="Your Name"
+                                        />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-800 ml-1">Email<span className="text-red-500">*</span></label>
-                                        <input type="email" className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400" />
+                                        <label className="text-sm font-bold text-gray-800 ml-1">Email Address<span className="text-red-500">*</span></label>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={formData.email}
+                                            onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                            className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400"
+                                            placeholder="you@example.com"
+                                        />
                                     </div>
                                 </div>
 
                                 <div className="grid md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-800 ml-1">Password<span className="text-red-500">*</span></label>
+                                        <input
+                                            type="password"
+                                            required
+                                            value={formData.password}
+                                            onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                            className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400"
+                                            placeholder="Min. 6 characters"
+                                        />
+                                    </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-gray-800 ml-1">Phone no.<span className="text-red-500">*</span></label>
-                                        <input type="tel" className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-gray-800 ml-1">City<span className="text-red-500">*</span></label>
-                                        <input type="text" className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400" />
+                                        <input
+                                            type="tel"
+                                            required
+                                            value={formData.phone}
+                                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                            className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400"
+                                            placeholder="+91..."
+                                        />
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-800 ml-1">Business Name<span className="text-red-500">*</span></label>
-                                    <input type="text" className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400" />
+                                <div className="grid md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-800 ml-1">City<span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.city}
+                                            onChange={e => setFormData({ ...formData, city: e.target.value })}
+                                            className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400"
+                                            placeholder="Your City"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-800 ml-1">Business Name (for Managers)</label>
+                                        <input
+                                            type="text"
+                                            value={formData.businessName}
+                                            onChange={e => setFormData({ ...formData, businessName: e.target.value })}
+                                            className="w-full px-5 py-3.5 bg-[#EAEAEA] border-none rounded-2xl focus:ring-2 focus:ring-orange-200 outline-none transition-all placeholder-gray-400"
+                                            placeholder="Your Restaurant"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="space-y-3 mt-2">
-                                    <label className="text-sm font-bold text-gray-800 ml-1">Interested In?<span className="text-red-500">*</span></label>
+                                    <label className="text-sm font-bold text-gray-800 ml-1">Account Role<span className="text-red-500">*</span></label>
                                     <div className="space-y-2.5">
                                         {['Manager Dashboard', 'Kitchen Dashboard', 'Customer Order', 'Invoice'].map((item) => (
                                             <label key={item} className="flex items-center gap-3 cursor-pointer group">
                                                 <div className="relative flex items-center">
-                                                    <input type="checkbox" className="peer w-5 h-5 border-[1.5px] border-gray-400 rounded focus:ring-0 checked:bg-orange-500 checked:border-orange-500 transition-all appearance-none" />
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.interestedIn.includes(item)}
+                                                        onChange={() => handleCheckboxChange(item)}
+                                                        className="peer w-5 h-5 border-[1.5px] border-gray-400 rounded focus:ring-0 checked:bg-orange-500 checked:border-orange-500 transition-all appearance-none"
+                                                    />
                                                     <svg className="absolute w-3.5 h-3.5 text-white hidden peer-checked:block pointer-events-none left-[3px] top-[3px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                                                         <polyline points="20 6 9 17 4 12"></polyline>
                                                     </svg>
                                                 </div>
-                                                <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">{item}</span>
+                                                <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                                                    {item === 'Manager Dashboard' ? 'Register as Restaurant Manager' : item}
+                                                </span>
                                             </label>
                                         ))}
                                     </div>
+                                    <p className="text-[10px] text-gray-400 italic mt-1 font-medium">* Select 'Manager Dashboard' to access restaurant controls, otherwise you'll be a customer.</p>
                                 </div>
 
                                 <div className="pt-4">
-                                    <button type="submit" className="px-12 py-3.5 bg-[#FD6941] text-white font-bold rounded-full hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 text-lg">
-                                        Submit
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="px-12 py-3.5 bg-[#FD6941] text-white font-bold rounded-full hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 text-lg disabled:opacity-70 flex items-center gap-2"
+                                    >
+                                        {isLoading ? 'Creating Account...' : 'Register Now'} <ArrowRight className="w-5 h-5" />
                                     </button>
                                 </div>
                             </form>

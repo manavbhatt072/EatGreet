@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { authAPI } from '../../utils/api';
 import logo from '../../assets/logo-full.png';
 
 export default function Login() {
@@ -10,32 +11,31 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
 
-        // Dummy login logic with role support
-        setTimeout(() => {
-            if (email === 'admin@eatgreet.com' && password === 'admin') {
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userRole', 'super-admin');
+        try {
+            const response = await authAPI.login({ email, password });
+            const userData = response.data;
+
+            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('userRole', userData.role);
+
+            if (userData.role === 'super-admin') {
                 navigate('/super-admin');
-            } else if (email === 'admin@gmail.com' && password === 'admin') {
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userRole', 'admin');
+            } else if (userData.role === 'admin') {
                 navigate('/admin');
             } else {
-                // For this demo, let's just let any non-empty input pass as super-admin
-                if (email && password) {
-                    localStorage.setItem('isAuthenticated', 'true');
-                    navigate('/super-admin');
-                } else {
-                    setError('Please enter valid credentials');
-                }
+                navigate('/customer/menu');
             }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+        } finally {
             setIsLoading(false);
-        }, 800);
+        }
     };
 
     return (
@@ -100,7 +100,7 @@ export default function Login() {
                 </form>
 
                 <p className="mt-8 text-center text-sm text-gray-500">
-                    New User? <Link to="/#contact" className="text-blue-500 font-semibold hover:underline">Register</Link>
+                    New User? <Link to="/signup" className="text-blue-500 font-semibold hover:underline">Register</Link>
                 </p>
             </motion.div>
         </div>

@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { User, Mail, Phone, MapPin, Save, Heart, Clock } from 'lucide-react';
 
 const CustomerProfile = () => {
+    const user = JSON.parse(localStorage.getItem('user')) || {};
     const [profile, setProfile] = useState({
-        fullName: 'Manav Bhatt',
-        email: 'manav@example.com',
-        phone: '+91 98765 43210',
-        address: 'B-404, Sunrise Apartments, Mumbai'
+        fullName: user.name || 'User',
+        email: user.email || 'user@example.com',
+        phone: user.phone || '',
+        address: user.city || ''
     });
 
     const [isEditing, setIsEditing] = useState(false);
@@ -22,8 +23,8 @@ const CustomerProfile = () => {
                 <button
                     onClick={() => setIsEditing(!isEditing)}
                     className={`px-5 py-2 rounded-full font-bold text-sm flex items-center gap-2 transition-colors shadow-sm ${isEditing
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                         }`}
                 >
                     {isEditing ? 'Save' : 'Edit'}

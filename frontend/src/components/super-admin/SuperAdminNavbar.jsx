@@ -1,11 +1,17 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Settings, Bell, ChevronDown } from 'lucide-react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { Settings, Bell, ChevronDown, LogOut } from 'lucide-react';
 
 import logo from '../../assets/logo-full.png';
 
 export default function SuperAdminNavbar() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate('/login');
+    };
 
     const navItems = [
         { name: 'Dashboard', path: '/super-admin' },
@@ -49,25 +55,38 @@ export default function SuperAdminNavbar() {
                     <Settings className="w-5 h-5" />
                 </Link>
 
-                <button className="w-11 h-11 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center transition-all shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-gray-100 text-gray-600 hover:text-black">
-                    <Settings className="w-5 h-5" />
-                </button>
                 <button className="w-11 h-11 bg-white hover:bg-gray-50 rounded-full flex items-center justify-center transition-all shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-gray-100 text-gray-600 hover:text-black relative">
                     <Bell className="w-5 h-5" />
                     <span className="absolute top-3 right-3.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                 </button>
 
                 {/* Profile Capsule */}
-                <Link to="/super-admin/profile" className="flex items-center gap-3 pl-1.5 pr-4 py-1.5 bg-white rounded-full shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-gray-100 cursor-pointer hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 pl-1.5 pr-4 py-1.5 bg-white rounded-full shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-gray-100 cursor-pointer hover:shadow-md transition-all">
-                    <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border-2 border-gray-50">
-                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150" alt="Admin" className="w-full h-full object-cover" />
+                <div className="relative group">
+                    <div className="flex items-center gap-3 pl-1.5 pr-4 py-1.5 bg-white rounded-full shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-gray-100 cursor-pointer hover:shadow-md transition-all">
+                        <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border-2 border-gray-50">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150" alt="Admin" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="hidden md:flex items-center gap-1">
+                            <span className="font-medium text-sm text-gray-800">{user?.name || 'Admin'}</span>
+                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                        </div>
                     </div>
-                    <div className="hidden md:flex items-center gap-1">
-                        <span className="font-medium text-sm text-gray-800">Admin</span>
-                        <ChevronDown className="w-4 h-4 text-gray-400" />
+
+                    {/* Dropdown */}
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[60] overflow-hidden">
+                        <Link to="/super-admin/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                            <Settings className="w-4 h-4" />
+                            Profile Settings
+                        </Link>
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-50"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Logout
+                        </button>
                     </div>
-                </Link>
+                </div>
             </div>
         </nav>
     );

@@ -78,6 +78,19 @@ const MediaSlider = ({ media, interval = 30000, className = "" }) => {
                             />
                         ))}
                     </div>
+
+                    <button
+                        onClick={prevSlide}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-1 bg-black/20 hover:bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={nextSlide}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-1 bg-black/20 hover:bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
                 </>
             )}
         </div>

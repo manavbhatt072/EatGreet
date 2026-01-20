@@ -84,6 +84,8 @@ const offers = [
 
 // Initial like counts are no longer needed since we are not showing counts
 
+import { menuAPI, categoryAPI } from '../../utils/api';
+
 const Menu = () => {
     const {
         cart, addToCart, removeFromCart, clearCart,
@@ -94,65 +96,35 @@ const Menu = () => {
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
     const [orderPlaced, setOrderPlaced] = useState(false);
-
-    // Live Menu Data
-    const [menuItems, setMenuItems] = useState(() => {
-        const saved = localStorage.getItem(MENU_ITEMS_KEY);
-        // Normalize IDs to string in mock data to ensure consistency
-        const defaultWithStringIds = mockMenuData.map(item => ({ ...item, id: String(item.id) }));
-        return saved ? JSON.parse(saved) : defaultWithStringIds;
-    });
+    const [menuItems, setMenuItems] = useState([]);
+    const [categories, setCategories] = useState(["All"]);
 
     useEffect(() => {
-        const handleMenuUpdate = () => {
-            const saved = localStorage.getItem(MENU_ITEMS_KEY);
-            if (saved) setMenuItems(JSON.parse(saved));
-        };
-
-        window.addEventListener('storage', handleMenuUpdate);
-        window.addEventListener('menu-update', handleMenuUpdate);
-        return () => {
-            window.removeEventListener('storage', handleMenuUpdate);
-            window.removeEventListener('menu-update', handleMenuUpdate);
-        };
+        fetchData();
+        // Poll for updates every 10 seconds
+        const interval = setInterval(fetchData, 10000);
+        return () => clearInterval(interval);
     }, []);
 
-    // Customer Details State
+    const fetchData = async () => {
+        try {
+            const [menuRes, catRes] = await Promise.all([
+                menuAPI.getAll(),
+                categoryAPI.getAll()
+            ]);
+            setMenuItems(menuRes.data);
+            setCategories(["All", ...catRes.data.map(c => c.name)]);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
     const [customerDetails, setCustomerDetails] = useState({
         name: "",
         phone: "",
         tableNo: "4", // Defaulting to 4 as per header
         notes: ""
     });
-
-    // Dynamic Categories State
-    const [categories, setCategories] = useState(["All", "Burgers", "Pizza", "Mexican", "Sides", "Beverages", "Desserts"]);
-
-    useEffect(() => {
-        const loadCategories = () => {
-            const saved = localStorage.getItem(CATEGORIES_KEY);
-            if (saved) {
-                const activeWrapper = JSON.parse(saved);
-                const activeNames = activeWrapper
-                    .filter(c => c.status === 'ACTIVE')
-                    .map(c => c.name);
-                // Ensure 'All' is always first
-                if (activeNames.length > 0) {
-                    setCategories(['All', ...activeNames]);
-                }
-            }
-        };
-
-        loadCategories();
-        window.addEventListener('storage', loadCategories);
-        // Also listen for category-update if running in same context/window
-        window.addEventListener('category-update', loadCategories);
-
-        return () => {
-            window.removeEventListener('storage', loadCategories);
-            window.removeEventListener('category-update', loadCategories);
-        };
-    }, []);
 
     const handlePlaceOrder = (e) => {
         e.preventDefault();
@@ -172,7 +144,8 @@ const Menu = () => {
     const grandTotal = subTotal + tax;
 
     const filteredItems = menuItems.filter(item => {
-        const matchesCategory = selectedCategory === "All" || (item.category && item.category.toUpperCase() === selectedCategory.toUpperCase());
+        const itemCategory = typeof item.category === 'object' ? item.category?.name : item.category;
+        const matchesCategory = selectedCategory === "All" || (itemCategory && itemCategory.toUpperCase() === selectedCategory.toUpperCase());
         const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.description.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCategory && matchesSearch;
@@ -237,7 +210,7 @@ const Menu = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredItems.map((item) => (
-                        <div key={item.id} className="bg-white rounded-[2.5rem] p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-all group relative overflow-hidden">
+                        <div key={item._id} className="bg-white rounded-[2.5rem] p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-all group relative overflow-hidden">
 
                             {/* Card Header / Image Slider */}
                             <div className="relative h-64 rounded-[2rem] overflow-hidden mb-4 bg-gray-100">
@@ -250,16 +223,14 @@ const Menu = () => {
                                 </div>
 
                                 {/* Like Button */}
-                                {/* Like Button & Count */}
-                                {/* Like Button */}
                                 <button
                                     onClick={() => toggleFavorite(item)}
-                                    className={`absolute top-4 right-4 z-20 w-9 h-9 backdrop-blur rounded-full flex items-center justify-center shadow-sm transition-all ${favorites[item.id]
+                                    className={`absolute top-4 right-4 z-20 w-9 h-9 backdrop-blur rounded-full flex items-center justify-center shadow-sm transition-all ${favorites[item._id]
                                         ? 'bg-red-50 text-red-500'
                                         : 'bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white'
                                         }`}
                                 >
-                                    <Heart className={`w-5 h-5 ${favorites[item.id] ? 'fill-current' : ''}`} />
+                                    <Heart className={`w-5 h-5 ${favorites[item._id] ? 'fill-current' : ''}`} />
                                 </button>
 
                                 {/* Media Slider if available, else Image */}
@@ -304,15 +275,15 @@ const Menu = () => {
 
                                 {/* Add Button / Qty Control */}
                                 <div className="flex items-center justify-center">
-                                    {cart[item.id] ? (
+                                    {cart[item._id] ? (
                                         <div className="flex items-center gap-4 bg-black text-white px-2 py-2 rounded-full shadow-lg w-full max-w-[140px] justify-between">
                                             <button
-                                                onClick={() => removeFromCart(item.id)}
+                                                onClick={() => removeFromCart(item._id)}
                                                 className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition"
                                             >
                                                 <Minus className="w-4 h-4" />
                                             </button>
-                                            <span className="font-bold text-lg w-6 text-center">{cart[item.id].qty}</span>
+                                            <span className="font-bold text-lg w-6 text-center">{cart[item._id].qty}</span>
                                             <button
                                                 onClick={() => addToCart(item)}
                                                 className="w-8 h-8 rounded-full bg-[#FD6941] flex items-center justify-center hover:bg-orange-600 transition"
@@ -351,7 +322,7 @@ const Menu = () => {
                             </div>
                             <div>
                                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Bill</p>
-                                <p className="text-xl font-bold">₹{totalPrice}</p>
+                                <p className="text-xl font-bold">₹{grandTotal}</p>
                             </div>
                         </div>
 
@@ -398,7 +369,7 @@ const Menu = () => {
                                     {/* Cart Items */}
                                     <div className="space-y-4">
                                         {Object.values(cart).map((item) => (
-                                            <div key={item.id} className="flex gap-4">
+                                            <div key={item._id} className="flex gap-4">
                                                 <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0">
                                                     <img src={item.image} className="w-full h-full object-cover" alt={item.name} />
                                                 </div>
@@ -409,7 +380,7 @@ const Menu = () => {
                                                     </div>
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex items-center gap-3 bg-gray-50 rounded-full px-2 py-1 h-7">
-                                                            <button onClick={() => removeFromCart(item.id)} className="w-5 h-5 flex items-center justify-center bg-white rounded-full text-gray-600 shadow-sm text-xs"><Minus className="w-3 h-3" /></button>
+                                                            <button onClick={() => removeFromCart(item._id)} className="w-5 h-5 flex items-center justify-center bg-white rounded-full text-gray-600 shadow-sm text-xs"><Minus className="w-3 h-3" /></button>
                                                             <span className="text-xs font-bold w-3 text-center">{item.qty}</span>
                                                             <button onClick={() => addToCart(item)} className="w-5 h-5 flex items-center justify-center bg-black text-white rounded-full shadow-sm text-xs"><Plus className="w-3 h-3" /></button>
                                                         </div>
